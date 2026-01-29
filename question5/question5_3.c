@@ -18,7 +18,7 @@ int main(int arc, char ** argv){
     size_t n = iterations[idx];
 
 
-    int BLOCK_SIZE = 32;
+    int BLOCK_SIZE = 16;
 
     // int A[n][n];
     // int B[n][n];
@@ -66,18 +66,29 @@ int main(int arc, char ** argv){
     gettimeofday(&start, NULL);
 
 
-    for(int ii = 0; i < n; ii+= BLOCK_SIZE){
+    for(int ii = 0; ii < n; ii+= BLOCK_SIZE){
 
-        
+        for(int jj = 0; jj < n; jj+= BLOCK_SIZE){
 
-    for (int i = 0; i < n; i++){
-        for (int j = 0; j < n; j++){
-            for (int k = 0; k < n; k++){
-                C[i][j] += A[i][k] * B[k][j];
-            }
-        }
-    }
+            for (int kk = 0;kk < n; kk+= BLOCK_SIZE){
+                
+
+                int i_limit = (ii + BLOCK_SIZE < n) ? ii + BLOCK_SIZE : n;
+                int j_limit = (jj + BLOCK_SIZE < n) ? jj + BLOCK_SIZE : n;
+                int k_limit = (kk + BLOCK_SIZE < n) ? kk + BLOCK_SIZE : n;
+
+                for (int i = ii; i < i_limit; i++){
+                    for (int j = jj; j < j_limit; j++){
+                        
+                        for (int k = kk; k < k_limit; k++){
+                            C[i][j] += A[i][k] * B[k][j];
+                        }
+                    }
+                }
+                      
 }
+}
+    }
 
     gettimeofday(&end, NULL);
     seconds  = end.tv_sec  - start.tv_sec;

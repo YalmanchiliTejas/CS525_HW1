@@ -18,7 +18,7 @@ int main(int arc, char ** argv){
     size_t n = iterations[idx];
 
 
-    int BLOCK_SIZE = 16;
+    int BLOCK_SIZE = 32;
 
     // int A[n][n];
     // int B[n][n];

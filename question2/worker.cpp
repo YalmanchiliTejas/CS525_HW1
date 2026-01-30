@@ -5,7 +5,7 @@
 int main(int argc, char ** argv) {
   size_t length = 10000000,skip=1;
   long sum = 0;
-    for(skip =2; skip<101;skip++){
+  for(skip =2; skip<101;skip++){
     long* a = (long *)malloc(skip*length * sizeof(long));
     //long a[skip * length];
     for (size_t i = 0 ; i < skip*length ; i++) {

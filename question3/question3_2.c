@@ -35,9 +35,8 @@ int main(int arc, char ** argv){
         sum += a[i+6];
         sum += a[i+7];
     }
-    for (int i = limit; i < length; i++){
-        sum += a[i];
-    }
+    sum += a[limit] + a[limit+ 1] + a[limit+ 2] + a[limit+3];
+
 }
     gettimeofday(&end, NULL);
     seconds  = end.tv_sec  - start.tv_sec;

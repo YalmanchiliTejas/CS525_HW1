@@ -5,14 +5,17 @@
 using namespace std;
 int main(int argc, char ** argv) {
   size_t n = 10; //n= 10, 1000, 10000, and 100000
-  int a[n][n];
-  int b[n];
-  int result[n];
+  //int a[n][n];
+  int* a = (int *)malloc(n * n * sizeof(int));
+  int* b = (int *)malloc(n * sizeof(int));
+  //int b[n];
+  //int result[n];
+  int* result = (int *)malloc(n * sizeof(int));
   for (size_t i = 0 ; i < n ; i++) {
     b[i]=3;
   
     for (size_t j = 0 ; j < n ; j++) {
-      a[i][j]=2;
+      a[i * n + j]=2;
     }
   }
   for (size_t i = 0 ; i < n ; i++) {
@@ -26,7 +29,7 @@ int main(int argc, char ** argv) {
   
   for (int i = 0 ; i < n ; i++) {
     for(int j =0; j < n; j++){
-      result[i]+=a[i][j] * b[i];
+      result[i]+=a[i * n + j] * b[i];
     }
   }
   gettimeofday(&end,NULL);

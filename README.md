@@ -19,7 +19,7 @@
 
     -> The first segment code for loop i-j is in the file q4_norm.c, to run it, run the executable run_norm.
     -> The second segment code for loop j-i is in the file q4_interchanged.c, to run it, run the executable run_ic.
-    -> NOTE: Value of  can be updated in each file.
+    -> NOTE: Value of n can be updated in each file.
 
 ## Question 5:
 

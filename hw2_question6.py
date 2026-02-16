@@ -3,7 +3,7 @@ import random
 import matplotlib.pyplot as plt
 
 import math
-
+import numpy as np
 import argparse
 
 
@@ -149,14 +149,16 @@ def bfs_distances(adj, src, n=None):
     dist[src] = 0
     parent = [-1] * n
     q = deque([src])
+    order = []
     while q:
         u = q.popleft()
+        order.append(u)
         for v in adj[u]:
             if dist[v] == -1:
                 dist[v] = dist[u] + 1
                 parent[v] = u
                 q.append(v)
-    return dist, parent
+    return dist, parent, order
 
 
 def estimate_diameter(adj, num_pairs=10000, seed=0):
@@ -175,45 +177,70 @@ def estimate_diameter(adj, num_pairs=10000, seed=0):
 
     for _ in range(num_sources):
         s = random.randrange(n)
-        dist, _ = bfs_distances(adj, s, n)
+        dist, _ , _= bfs_distances(adj, s, n)
 
         for _ in range(targets_per_source):
             t = random.randrange(n)
             d = dist[t]
             if d > best:
                 best = d
-
+    
     return best
 
 
 def estimate_bisection_width(adj, num_trials=10000, seed=0):
     """
-    Simulation-based bisection width estimate:
-    sample many random equipartitions (A, V\A) with |A|=n/2,
-    compute edge crossings, take min.
+    using native python
     """
     random.seed(seed)
-    n = len(adj)
+    n = len(adj.keys())
     half = n // 2
-    best = None
+    np.random.seed(seed)
+    # vertices = list(adj.keys())
+    # best = None
 
-    for _ in range(num_trials):
-        A = set(random.sample(range(n), half))
-        inA = [False] * n
-        for u in A:
-            inA[u] = True
+    # for _ in range(num_trials):
+    #     A = set(random.sample(vertices, half))
+    #     inA = [False] * n
+    #     for u in A:
+    #         inA[u] = True
 
-        crossings = 0
-        # Count each undirected edge once by counting edges from A to not-A
-        for u in A:
-            for v in adj[u]:
-                if not inA[v]:
-                    crossings += 1
+    #     crossings = 0
+    #     # Count each undirected edge once by counting edges from A to not-A
+    #     for u in A:
+    #         for v in adj[u]:
+    #             if not inA[v]:
+    #                 crossings += 1
 
-        if best is None or crossings < best:
-            best = crossings
+    #     if best is None or crossings < best:
+    #         best = crossings
 
-    return 0 if best is None else best
+    # return 0 if best is None else best
+
+    V = []
+    U = []
+
+    for k, v in adj.items():
+        for vertex in v:
+            if k < vertex:
+                U.append(k)
+                V.append(vertex)
+    U = np.array(U,dtype=np.int32)
+    V = np.array(V,dtype=np.int32)
+
+    width = 0
+    for i in range(num_trials):
+        side = np.zeros(n)
+        A = np.random.choice(n, size=half, replace=False)
+        side[A] = 1
+        
+        num_crossings = int(np.count_nonzero(side[U] != side[V]))
+
+        width = max(width, num_crossings)
+    return width
+    
+
+
 
 
 
@@ -225,23 +252,33 @@ def estimate_dilation_congestion(adj_a, adj_b,):
     dilation = 0
 
     load = defaultdict(int)
+    n = len(adj_a)
 
     for s in range(len(adj_a)):
-        distance, parents = bfs_distances(adj_b, s, len(adj_a))
+        distance, parents, order = bfs_distances(adj_b, s, len(adj_a))
+        demand = [0] * n
         for t in adj_a[s]:
             if s < t:
                 d = distance[t]
                 if d == -1:
                     continue
                 dilation = max(dilation, d)
-            current = t
-            while current != s:
-                parent = parents[current]
-                if parent == -1:
-                    break
-                edges = (parent, current) if parent < current else (current, parent)
-                load[edges] += 1
-                current = parent
+                demand[t] += 1
+                # current = t
+                # while current != s:
+                #     parent = parents[current]
+                #     if parent == -1:
+                #         break
+                #     edges = (parent, current) if parent < current else (current, parent)
+                #     load[edges] += 1
+                #     current = parent
+        for u in reversed(order):
+            p = parent[u]
+            if p != -1:
+                if demand[u]:
+                    edges = (p, u) if p  < u else (u, p)
+                    load[edges] += demand[u]
+                    demand[p] += demand[u]
     return dilation, max(load.values()) if load else 0
 
 
@@ -289,8 +326,8 @@ if __name__ == "__main__":
     args_parser.add_argument("-m", "--mesh", type=str,help="Choose between 2D, 3D, Hypercube", default="2D", required=False)
     # args_parser.add_argument("-p", "--processors", type=int, help="Choose the p value", default=0, required=True)
     args_parser.add_argument("--k", "--connections", type=int,dest="k", help="Choose the number of connetions for each processor", default=4, required=False)
-    args_parser.add_argument("-n", "--network_mapping", type=bool, help="network_mapping", default=False, required=False)
-    args_parser.add_argument("-all", "-all_meshes", type=bool, help="Run for all meshes for diameter and bisection width", default=False, required=False)
+    args_parser.add_argument("-n", "--network_mapping",  help="network_mapping",action="store_true",  required=False)
+    args_parser.add_argument("-all", "-all_meshes", help="Run for all meshes for diameter and bisection width",action="store_true",required=False)
 
     processors = [2**6, 3**6, 4**6, 5**6, 6**6]
    
@@ -303,7 +340,7 @@ if __name__ == "__main__":
     dilation_vals = []
     congestion_vals = []
     if not args.all:
-        for p in processors:
+        for i, p in enumerate(processors):
             if  not args.network_mapping:
                 if args.mesh == "2D":
                     graph = generate_2d_mesh(p, args.k)
@@ -320,11 +357,12 @@ if __name__ == "__main__":
                 dilation, congestion = estimate_dilation_congestion(map_a, map_b)
                 dilation_vals.append(dilation)
                 congestion_vals.append(congestion)
+                print(f"The dilation {dilation_vals[-1]} and congestion_vals {congestion_vals[-1]} for this processor index:{i}")
         
     else:
         meshes = ["2D", "3D", "Hypercube"]
         for mesh in meshes:
-            for p in processors:
+            for i,  p in enumerate(processors):
                 if mesh == "2D":
                     graph = generate_2d_mesh(p, args.k)
                 elif mesh == "3D":
@@ -333,12 +371,15 @@ if __name__ == "__main__":
                     graph = generate_hypercube(p, args.k)
                 
                 diameter_val[mesh].append(estimate_diameter(graph))
+                print(f"mesh{mesh} has diameter{diameter_val[mesh][-1]} for this processor index: {i}")
                 bisection_val[mesh].append(estimate_bisection_width(graph))
+                print(f"mesh{mesh} has bisection{bisection_val[mesh][-1]} for this processor index: {i}")
     
     if args.network_mapping:
         plot_dilation_congestion(dilation_vals, congestion_vals, processors)
     else:
         plot_diameter_bisection(diameter_val, bisection_val, processors)
+        print("dimatert and bisection plotting done")
 
 
     

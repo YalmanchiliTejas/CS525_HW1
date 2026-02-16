@@ -1,4 +1,4 @@
-from collections import defautldict
+from collections import defaultdict, deque
 import random
 import matplotlib
 
@@ -9,62 +9,158 @@ import argparse
 
 '''
 
-generates an adjacency list to get where each of the processors has k connections to randomly selected processors
+generates an adjacency list to get where each of the processors has k additional connections to randomly selected processors
 '''
-def generate_random_edges(p, k):
+# def generate_random_edges(p, k):
 
-    visited = set()
-    adj_list = defaultdict(list)  
+#     visited = set()
+#     adj_list = defaultdict(list)  
+#     random.seed(0)
+#     edge_count = defaultdict(int)
+#     for v in p:
+#         edge_count[v] = 0
+
+#     for vertex in p:
+#         while edge_count[vertex] < k:
+
+#             need = k - edge_count[u]
+
+#             available = [p1 for p1 in p if p1 != vertex and edge_count[p1] < k ]
+
+#             if not available:
+#                 break
+#             sampled = random.sample(available, min(need, len(available)))
+#             for v in sampled:
+#                 if edge_count[u] < k and edge_count[v] < k and (vertex, v) not in visited:
+#                     adj[vertex].append(v)
+#                     adj[v].append(vertex)
+#                     edge_count[vertex] += 1
+#                     edge_count[v] += 1
+#                     visited.add((vertex, v))
+#                     visited.add((v, vertex))
+#     return adj_list
+
+def generate_random_edges(adj, k):
+
+    V = list(adj.keys())
+
+    E = set()
+
     random.seed(0)
-    edge_count = defaultdict(int)
-    for v in p:
-        edge_count[v] = 0
 
-    for vertex in p:
-        while edge_count[vertex] < k:
+    for vertex in V:
 
-            need = k - edge_count[u]
+        for w in adj[vertex]:
 
-            available = [p1 for p1 in p if p1 != vertex and edge_count[p1] < k ]
+            edge = (vertex, w) if vertex < w else (w, vertex)
 
-            if not available:
-                break
-            sampled = random.sample(available, min(need, len(available)))
-            for v in sampled:
-                if edge_count[u] < k and edge_count[v] < k and (vertex, v) not in visited:
-                    adj[vertex].append(v)
-                    adj[v].append(vertex)
-                    edge_count[vertex] += 1
-                    edge_count[v] += 1
-                    visited.add((vertex, v))
-                    visited.add((v, vertex))
-    return adj_list
+            E.add(edge)
+    
+    E_prime = set()
+    V_prime = []
+    temp_k = 0
+
+    for vertex in V:
+        temp_k = k
+        while temp_k != 0:
+            
+            remaining = [x for x in V if x != vertex]
+
+            sample_size = min(len(remaining), temp_k)
+
+            V_prime = random.sample(remaining, sample_size)
+
+            for w in V_prime:
+
+                edge = (vertex,w) if vertex < w else (w, vertex)
+
+                if edge not in E:
+                    E_prime.add(edge)
+                
+            for (v, w) in E_prime:
+                E.add((v, w))
+                adj[v].append(w)
+                adj[w].append(v)
+            
+            temp_k -= len(E_prime)
+            E_prime.clear()
+            V_prime = []
+    return adj
 
 
+#generate a number to a processor
+def generate_2d_id(x, y, width):
 
+    return  x*width+ y
 def generate_2d_mesh(p, k):
-    total_p = math.sqrt(p) * math.sqrt(p)
+    
+    proc = int(math.sqrt(p))
 
-    vertices = [i for i in range(total_p)]
-    adj_list = generate_random_edges(total_p, k)
-    return adj_list
+    adj = defaultdict(list)
 
-def generate_3d_mesh(p, k)
-    total_p =  int((p**(1/3)) * (p**(1/3)) * (p**(1/3)))
+    
+    for p1 in range(proc):
+        for p2 in range(proc):
+            v1 = generate_2d_id(p1, p2, proc)
 
-    vertices = [i for i in range(total_p)]
-    adj_list = generate_random_edges(total_p, k)
-    return adj_list
+            #check if there can be any down neighbors
+            if p1 + 1 < proc:
+                v2 = generate_2d_id(p1 + 1, p2, proc)
+                adj[v1].append(v2)
+                adj[v2].append(v1)
+            #check if there can be any neighbor to right
+            if p2 + 1 < proc:
+                v2 = generate_2d_id(p1, p2 + 1, proc)
+                adj[v1].append(v2)
+                adj[v2].append(v1)
+    return generate_random_edges(adj, k)
+
+def generate_3d_id(x, y, z, width):
+    return x*width*width + y*width + z
+
+def generate_3d_mesh(p, k):
+    proc = int(p ** (1/3))
+    adj = defaultdict(list)
+
+    for p1 in range(proc):
+        for p2 in range(proc):
+            for p3 in range(proc):
+                v1 = generate_3d_id(p1, p2, p3, proc)
+
+                #check if there can be any right neighbors
+                if p1 + 1 < proc:
+                    v2 = generate_3d_id(p1 + 1, p2, p3, proc)
+                    adj[v1].append(v2)
+                    adj[v2].append(v1)
+                #check if there can be any neighbor below
+                if p2 + 1 < proc:
+                    v2 = generate_3d_id(p1, p2 + 1, p3, proc)
+                    adj[v1].append(v2)
+                    adj[v2].append(v1)
+                #check if there can be any neighbor in the z direction
+                if p3 + 1 < proc:
+                    v2 = generate_3d_id(p1, p2, p3 + 1, proc)
+                    adj[v1].append(v2)
+                    adj[v2].append(v1)
+    return generate_random_edges(adj, k)
+
 
 def generate_hypercube(p, k):
 
-    exponent = int(2 * (p**(1/6)))
+    sixth_root = int(p ** (1/6))
+    dimension = 2 * sixth_root
+    total_nodes = 2**(dimension)
 
-    total_p =  2**(exponent)
+    adj = defaultdict(list)
 
-    vertices = [i for i in range(total_p)]
-    adj_list = generate_random_edges(total_p, k)
-    return adj_list
+    for i in range(total_nodes):
+        for d in range(dimension):
+            neighbor = i ^ (1 << d)
+            
+            if i < neighbor:
+                adj[i].append(neighbor)
+                adj[neighbor].append(i)
+    return generate_random_edges(adj, k)
 
 
 
@@ -72,23 +168,25 @@ def generate_hypercube(p, k):
 
 
 
-ef bfs_distances(adj, src, n=None):
+def bfs_distances(adj, src, n=None):
     """Standard BFS shortest-path distances from src."""
     if n is None:
         n = len(adj)
     dist = [-1] * n
     dist[src] = 0
+    parent = [-1] * n
     q = deque([src])
     while q:
         u = q.popleft()
         for v in adj[u]:
             if dist[v] == -1:
                 dist[v] = dist[u] + 1
+                parent[v] = u
                 q.append(v)
-    return dist
+    return dist, parent
 
 
-def estimate_diameter(adj, num_pairs=2000, seed=0):
+def estimate_diameter(adj, num_pairs=10000, seed=0):
     """
     Simulation-based diameter estimate:
     sample many random (s,t), compute shortest-path distance via BFS, take max.
@@ -104,7 +202,7 @@ def estimate_diameter(adj, num_pairs=2000, seed=0):
 
     for _ in range(num_sources):
         s = random.randrange(n)
-        dist = bfs_distances(adj, s, n)
+        dist, _ = bfs_distances(adj, s, n)
 
         for _ in range(targets_per_source):
             t = random.randrange(n)
@@ -115,7 +213,7 @@ def estimate_diameter(adj, num_pairs=2000, seed=0):
     return best
 
 
-def estimate_bisection_width(adj, num_trials=200, seed=0):
+def estimate_bisection_width(adj, num_trials=10000, seed=0):
     """
     Simulation-based bisection width estimate:
     sample many random equipartitions (A, V\A) with |A|=n/2,
@@ -145,22 +243,78 @@ def estimate_bisection_width(adj, num_trials=200, seed=0):
     return 0 if best is None else best
 
 
+
+
+def estimate_dilation_congestion(adj_a, adj_b,):
+
+    
+
+    dilation = 0
+
+    load = defaultdict(int)
+
+    for s in range(len(adj_a)):
+        distance, parents = bfs_distances(adj_a, s, len(adj_a))
+        for t in adj_a[s]:
+            if s < t:
+                d = distance[t]
+                if d == -1:
+                    continue
+                dilation = max(dilation, d)
+            current = t
+            while current != s:
+                parent = parents[current]
+                if parent == -1:
+                    break
+                edges = (parent, current) if parent < current else (current, parent)
+                load[edges] += 1
+                current = parent
+    return dilation, max(load.values()) if load else 0
+
+
+
 if __name__ == "__main__":
 
 
     args_parser = argparse.ArgumentParser(description="simulation generator")
 
-    args_parser.add_argument("-m", "--mesh", type=string,help="Choose between 2D, 3D, Hypercube", default="2D", required=True)
-    args_parser.add_argument("-p", "--processors", type=int, help="Choose the p value", default=0, required=True)
+    args_parser.add_argument("-m", "--mesh", type=str,help="Choose between 2D, 3D, Hypercube", default="2D", required=True)
+    # args_parser.add_argument("-p", "--processors", type=int, help="Choose the p value", default=0, required=True)
     args_parser.add_argument("-k", "--connections", type=int, help="Choose the number of connetions for each processor", default=4, required=True)
+    args_parser.add_argument("-n", "--network_mapping", type=bool, help="network_mapping", default=False, required=False)
+
+    processors = [2**6, 3**6, 4**6, 5**6, 6**6]
 
     args = args_parser.parse_args()
 
-    mesh = generate_mesh(args)
     graph = None
-    if mesh == "2D":
-        graph = generate_2d_mesh(args.p, args.k)
-    elif mesh == "3D":
-        graph = generate_3d_mesh(args.p, args.k)
-    else:
-        graph = generate_hypercube(args.p, args.k)
+    diameter_val = []
+    bisection_val = []
+
+    dilation_vals = []
+    congestion_vals = []
+
+    for p in processors:
+        if  not args.network_mapping:
+            if args.mesh == "2D":
+                graph = generate_2d_mesh(p, args.k)
+            elif args.mesh == "3D":
+                graph = generate_3d_mesh(p, args.k)
+            else:
+                graph = generate_hypercube(p, args.k)
+            
+            diameter_val.append(estimate_diameter(graph))
+            bisection_val.append(estimate_bisection_width(graph))
+        else:
+            map_a = generate_2d_mesh(p, args.k)
+            map_b = generate_3d_mesh(p, args.k)
+            dilation, congestion = estimate_dilation_congestion(map_a, map_b)
+            dilation_vals.append(dilation)
+            congestion_vals.append(congestion)
+
+    
+
+        
+
+
+    

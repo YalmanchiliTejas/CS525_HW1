@@ -35,9 +35,10 @@ def generate_random_edges(adj, k):
 
     for vertex in V:
         temp_k = k
+        neighbors = set(adj[vertex])
         while temp_k != 0:
             
-            remaining = [x for x in V if x != vertex]
+            remaining = [x for x in V if x != vertex and x not in neighbors]
 
             sample_size = min(len(remaining), temp_k)
 
@@ -228,7 +229,7 @@ def estimate_bisection_width(adj, num_trials=10000, seed=0):
     U = np.array(U,dtype=np.int32)
     V = np.array(V,dtype=np.int32)
 
-    width = 0
+    width = float("inf")
     for i in range(num_trials):
         side = np.zeros(n)
         A = np.random.choice(n, size=half, replace=False)
@@ -236,8 +237,8 @@ def estimate_bisection_width(adj, num_trials=10000, seed=0):
         
         num_crossings = int(np.count_nonzero(side[U] != side[V]))
 
-        width = max(width, num_crossings)
-    return width
+        width = min(width, num_crossings)
+    return width if width < float("inf") else 0
     
 
 

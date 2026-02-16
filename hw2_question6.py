@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 import random
-import matplotlib
+import matplotlib as plt
 
 import math
 
@@ -11,34 +11,7 @@ import argparse
 
 generates an adjacency list to get where each of the processors has k additional connections to randomly selected processors
 '''
-# def generate_random_edges(p, k):
 
-#     visited = set()
-#     adj_list = defaultdict(list)  
-#     random.seed(0)
-#     edge_count = defaultdict(int)
-#     for v in p:
-#         edge_count[v] = 0
-
-#     for vertex in p:
-#         while edge_count[vertex] < k:
-
-#             need = k - edge_count[u]
-
-#             available = [p1 for p1 in p if p1 != vertex and edge_count[p1] < k ]
-
-#             if not available:
-#                 break
-#             sampled = random.sample(available, min(need, len(available)))
-#             for v in sampled:
-#                 if edge_count[u] < k and edge_count[v] < k and (vertex, v) not in visited:
-#                     adj[vertex].append(v)
-#                     adj[v].append(vertex)
-#                     edge_count[vertex] += 1
-#                     edge_count[v] += 1
-#                     visited.add((vertex, v))
-#                     visited.add((v, vertex))
-#     return adj_list
 
 def generate_random_edges(adj, k):
 
@@ -254,7 +227,7 @@ def estimate_dilation_congestion(adj_a, adj_b,):
     load = defaultdict(int)
 
     for s in range(len(adj_a)):
-        distance, parents = bfs_distances(adj_a, s, len(adj_a))
+        distance, parents = bfs_distances(adj_b, s, len(adj_a))
         for t in adj_a[s]:
             if s < t:
                 d = distance[t]
@@ -272,45 +245,101 @@ def estimate_dilation_congestion(adj_a, adj_b,):
     return dilation, max(load.values()) if load else 0
 
 
+def plot_and_save_multiline(x,val_dict, x_label, y_label, title, filename):
+
+    plt.figure()
+    for key , value in val_dict.items():
+        plt.plot(x, value, marker="o", label=key)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.grid(True)
+    plt.legend()
+    plt.savefig(filename)
+    plt.close()
+
+def plot_and_save_single(x, y, x_label, y_label, title, filename):
+
+    plt.figure()
+    plt.plot(x, y, marker="o")
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+
+
+def plot_diameter_bisection(diameter_dict, bisection_dict, processors):
+    
+    plot_and_save_multiline(processors, diameter_dict, "Number of Processors", "Diameter", "Diameter vs Number of Processors", "diameter.png")
+    plot_and_save_multiline(processors, bisection_dict, "Number of Processors", "Bisection Width", "Bisection Width vs Number of Processors", "bisection.png")
+
+def plot_dilation_congestion(dilation_vals, congestion_vals, processors):
+    plot_and_save_single(processors, dilation_vals, "Number of Processors", "Dilation", "Dilation vs Number of Processors", "dilation.png")
+    plot_and_save_single(processors, congestion_vals, "Number of Processors", "Congestion", "Congestion vs Number of Processors", "congestion.png")
+
+
 
 if __name__ == "__main__":
 
 
     args_parser = argparse.ArgumentParser(description="simulation generator")
 
-    args_parser.add_argument("-m", "--mesh", type=str,help="Choose between 2D, 3D, Hypercube", default="2D", required=True)
+    args_parser.add_argument("-m", "--mesh", type=str,help="Choose between 2D, 3D, Hypercube", default="2D", required=False)
     # args_parser.add_argument("-p", "--processors", type=int, help="Choose the p value", default=0, required=True)
     args_parser.add_argument("-k", "--connections", type=int, help="Choose the number of connetions for each processor", default=4, required=True)
     args_parser.add_argument("-n", "--network_mapping", type=bool, help="network_mapping", default=False, required=False)
+    args_parser.add_argument("-all", "-all_meshes", type=bool, help="Run for all meshes for diameter and bisection width", default=False, required=False)
 
     processors = [2**6, 3**6, 4**6, 5**6, 6**6]
 
     args = args_parser.parse_args()
 
     graph = None
-    diameter_val = []
-    bisection_val = []
+    diameter_val = defaultdict(list)
+    bisection_val = defaultdict(list)
 
     dilation_vals = []
     congestion_vals = []
-
-    for p in processors:
-        if  not args.network_mapping:
-            if args.mesh == "2D":
-                graph = generate_2d_mesh(p, args.k)
-            elif args.mesh == "3D":
-                graph = generate_3d_mesh(p, args.k)
+    if not args.all:
+        for p in processors:
+            if  not args.network_mapping:
+                if args.mesh == "2D":
+                    graph = generate_2d_mesh(p, args.k)
+                elif args.mesh == "3D":
+                    graph = generate_3d_mesh(p, args.k)
+                else:
+                    graph = generate_hypercube(p, args.k)
+                
+                diameter_val[args.mesh].append(estimate_diameter(graph))
+                bisection_val[args.mesh].append(estimate_bisection_width(graph))
             else:
-                graph = generate_hypercube(p, args.k)
-            
-            diameter_val.append(estimate_diameter(graph))
-            bisection_val.append(estimate_bisection_width(graph))
-        else:
-            map_a = generate_2d_mesh(p, args.k)
-            map_b = generate_3d_mesh(p, args.k)
-            dilation, congestion = estimate_dilation_congestion(map_a, map_b)
-            dilation_vals.append(dilation)
-            congestion_vals.append(congestion)
+                map_a = generate_2d_mesh(p, args.k)
+                map_b = generate_3d_mesh(p, args.k)
+                dilation, congestion = estimate_dilation_congestion(map_a, map_b)
+                dilation_vals.append(dilation)
+                congestion_vals.append(congestion)
+        
+    else:
+        meshes = ["2D", "3D", "Hypercube"]
+        for mesh in meshes:
+            for p in processors:
+                if mesh == "2D":
+                    graph = generate_2d_mesh(p, args.k)
+                elif mesh == "3D":
+                    graph = generate_3d_mesh(p, args.k)
+                else:
+                    graph = generate_hypercube(p, args.k)
+                
+                diameter_val[mesh].append(estimate_diameter(graph))
+                bisection_val[mesh].append(estimate_bisection_width(graph))
+    
+    if args.network_mapping:
+        plot_dilation_congestion(dilation_vals, congestion_vals, processors)
+    else:
+        plot_diameter_bisection(diameter_val, bisection_val, processors)
+
 
     
 

@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 import random
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 import math
 
@@ -288,12 +288,12 @@ if __name__ == "__main__":
 
     args_parser.add_argument("-m", "--mesh", type=str,help="Choose between 2D, 3D, Hypercube", default="2D", required=False)
     # args_parser.add_argument("-p", "--processors", type=int, help="Choose the p value", default=0, required=True)
-    args_parser.add_argument("-k", "--connections", type=int, help="Choose the number of connetions for each processor", default=4, required=True)
+    args_parser.add_argument("--k", "--connections", type=int,dest="k", help="Choose the number of connetions for each processor", default=4, required=False)
     args_parser.add_argument("-n", "--network_mapping", type=bool, help="network_mapping", default=False, required=False)
     args_parser.add_argument("-all", "-all_meshes", type=bool, help="Run for all meshes for diameter and bisection width", default=False, required=False)
 
     processors = [2**6, 3**6, 4**6, 5**6, 6**6]
-
+   
     args = args_parser.parse_args()
 
     graph = None

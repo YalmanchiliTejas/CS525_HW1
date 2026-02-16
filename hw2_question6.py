@@ -274,7 +274,7 @@ def estimate_dilation_congestion(adj_a, adj_b,):
                 #     load[edges] += 1
                 #     current = parent
         for u in reversed(order):
-            p = parent[u]
+            p = parents[u]
             if p != -1:
                 if demand[u]:
                     edges = (p, u) if p  < u else (u, p)
@@ -358,7 +358,7 @@ if __name__ == "__main__":
                 dilation, congestion = estimate_dilation_congestion(map_a, map_b)
                 dilation_vals.append(dilation)
                 congestion_vals.append(congestion)
-                print(f"The dilation {dilation_vals[-1]} and congestion_vals {congestion_vals[-1]} for this processor index:{i}")
+                print(f"The dilation: {dilation_vals[-1]} and congestion_vals: {congestion_vals[-1]} for this processor index:{i}")
         
     else:
         meshes = ["2D", "3D", "Hypercube"]
@@ -372,9 +372,9 @@ if __name__ == "__main__":
                     graph = generate_hypercube(p, args.k)
                 
                 diameter_val[mesh].append(estimate_diameter(graph))
-                print(f"mesh{mesh} has diameter{diameter_val[mesh][-1]} for this processor index: {i}")
+                print(f"mesh {mesh} has diameter: {diameter_val[mesh][-1]} for this processor index: {i}")
                 bisection_val[mesh].append(estimate_bisection_width(graph))
-                print(f"mesh{mesh} has bisection{bisection_val[mesh][-1]} for this processor index: {i}")
+                print(f"mesh{mesh} has bisection: {bisection_val[mesh][-1]} for this processor index: {i}")
     
     if args.network_mapping:
         plot_dilation_congestion(dilation_vals, congestion_vals, processors)

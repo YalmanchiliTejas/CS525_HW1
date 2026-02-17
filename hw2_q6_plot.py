@@ -2,69 +2,97 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-# Data (actual data points only)
-processors = np.array([64, 729, 4096, 15625, 46656], dtype=float)
-diameter_2d = np.array([3, 4, 5, 6, 6], dtype=float)
-diameter_3d = np.array([3, 4, 5, 5, 6], dtype=float)
-diameter_hypercube = np.array([2, 3, 3, 4, 4], dtype=float)
+# Data
+processors = np.array([64, 729, 4096, 15625, 46656])
+diameter_data = {
+    '2D Mesh': np.array([3, 4, 5, 6, 6]),
+    '3D Mesh': np.array([3, 4, 5, 5, 6]),
+    'Hypercube': np.array([2, 3, 3, 4, 4])
+}
+bisection_data = {
+    '2D Mesh': np.array([150, 2049, 11955, 46211, 138788]),
+    '3D Mesh': np.array([173, 2297, 13653, 53084, 160259]),
+    'Hypercube': np.array([45, 192, 952, 4433, 20119])
+}
+dilation = np.array([3, 4, 5, 5, 6])
+congestion = np.array([7, 9, 15, 18, 24])
+colors = {'2D Mesh': 'blue', '3D Mesh': 'red', 'Hypercube': 'green'}
+markers = {'2D Mesh': 'o', '3D Mesh': 's', 'Hypercube': '^'}
 
-# Single generic model: fit curve from data only (no predefined exponent)
-# Power law: y = a * p^b  (both a and b estimated from data)
-def power_law(p, a, b):
-    return a * (p ** b)
+# Power law model: y = a * p^b
+power_law = lambda p, a, b: a * (p ** b)
+r_squared = lambda y_true, y_pred: 1 - np.sum((y_true - y_pred)**2) / np.sum((y_true - np.mean(y_true))**2)
 
-# Fit curves using only the data points (estimate a and b for each network)
-params_2d, _ = curve_fit(power_law, processors, diameter_2d)
-params_3d, _ = curve_fit(power_law, processors, diameter_3d)
-params_hypercube, _ = curve_fit(power_law, processors, diameter_hypercube)
+def plot_metric(data_dict, ylabel, title, filename):
+    """Plot metric with fitted curves"""
+    params = {name: curve_fit(power_law, processors, values)[0] 
+              for name, values in data_dict.items()}
+    
+    print(f"\n{title} fits:")
+    for name, (a, b) in params.items():
+        print(f"  {name}: {a:.3f} * p^{b:.3f}")
+    
+    p_smooth = np.linspace(processors.min(), processors.max(), 200)
+    plt.figure(figsize=(10, 6))
+    
+    for name, values in data_dict.items():
+        plt.plot(processors, values, markers[name], color=colors[name], 
+                 markersize=8, alpha=0.7, label=f'{name} (data)')
+        plt.plot(p_smooth, power_law(p_smooth, *params[name]), '--', 
+                 color=colors[name], linewidth=2,
+                 label=f'{name} fit: {params[name][0]:.2f}*p^{params[name][1]:.2f}')
+    
+    plt.xlim(0, 50000)
+    plt.xlabel('Number of Processors', fontsize=12)
+    plt.ylabel(ylabel, fontsize=12)
+    plt.title(title, fontsize=14)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=10)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    plt.show()
+    
+    print(f"\n{title} R² values:")
+    for name, values in data_dict.items():
+        r2 = r_squared(values, power_law(processors, *params[name]))
+        print(f"  {name}: {r2:.4f}")
 
-print(f"2D Mesh estimated fit: {params_2d[0]:.3f} * p^{params_2d[1]:.3f}")
-print(f"3D Mesh estimated fit: {params_3d[0]:.3f} * p^{params_3d[1]:.3f}")
-print(f"Hypercube estimated fit: {params_hypercube[0]:.3f} * p^{params_hypercube[1]:.3f}")
-print(f"\nData points - Processors: {processors}")
-print(f"2D diameters: {diameter_2d}")
-print(f"3D diameters: {diameter_3d}")
-print(f"Hypercube diameters: {diameter_hypercube}")
+def plot_single_metric(values, ylabel, title, filename, color='blue', marker='o'):
+    """Plot single metric with fitted curve"""
+    params = curve_fit(power_law, processors, values)[0]
+    a, b = params
+    
+    print(f"\n{title} fit: {a:.3f} * p^{b:.3f}")
+    
+    p_smooth = np.linspace(processors.min(), processors.max(), 200)
+    plt.figure(figsize=(10, 6))
+    
+    plt.plot(processors, values, marker, color=color, markersize=8, alpha=0.7, label='Data')
+    plt.plot(p_smooth, power_law(p_smooth, *params), '--', color=color, linewidth=2,
+             label=f'Fit: {a:.2f}*p^{b:.2f}')
+    
+    plt.xlim(0, 50000)
+    plt.xlabel('Number of Processors', fontsize=12)
+    plt.ylabel(ylabel, fontsize=12)
+    plt.title(title, fontsize=14)
+    plt.grid(True, alpha=0.3)
+    plt.legend(fontsize=10)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    plt.show()
+    
+    r2 = r_squared(values, power_law(processors, *params))
+    print(f"{title} R²: {r2:.4f}")
 
-# Smooth curve for plotting: linear x from min to max processor value
-p_smooth = np.linspace(processors.min(), processors.max(), 200)
+# Plot diameter
+plot_metric(diameter_data, 'Diameter', 'Diameter vs Number of Processors', 'diameter_comparison.png')
 
-# Create the plot: data points + curves estimated from those points
-# Use linear x-axis 0--45000 like the reference plot
-plt.figure(figsize=(10, 6))
-plt.plot(processors, diameter_2d, 'o', color='blue', markersize=8, alpha=0.5, label='2D Mesh (data)')
-plt.plot(processors, diameter_3d, 's', color='red', markersize=8, alpha=0.5, label='3D Mesh (data)')
-plt.plot(processors, diameter_hypercube, '^', color='green', markersize=8, alpha=0.5, label='Hypercube (data)')
+# Plot bisection width
+plot_metric(bisection_data, 'Bisection Width', 'Bisection Width vs Number of Processors', 'bisection_comparison.png')
 
-plt.plot(p_smooth, power_law(p_smooth, *params_2d), '--', color='blue', linewidth=2,
-         label=f'2D fit: {params_2d[0]:.2f}*p^{params_2d[1]:.2f}')
-plt.plot(p_smooth, power_law(p_smooth, *params_3d), '--', color='red', linewidth=2,
-         label=f'3D fit: {params_3d[0]:.2f}*p^{params_3d[1]:.2f}')
-plt.plot(p_smooth, power_law(p_smooth, *params_hypercube), '--', color='green', linewidth=2,
-         label=f'Hypercube fit: {params_hypercube[0]:.2f}*p^{params_hypercube[1]:.2f}')
+# Plot dilation
+plot_single_metric(dilation, 'Dilation', 'Dilation vs Number of Processors', 'dilation_comparison.png', color='purple', marker='D')
 
-plt.xlim(0, 50000)  # Extend to show all data points including 46656
-plt.xlabel('Number of Processors', fontsize=12)
-plt.ylabel('Diameter', fontsize=12)
-plt.title('Diameter vs Number of Processors', fontsize=14)
-plt.grid(True, alpha=0.3)
-plt.legend(fontsize=10)
-plt.tight_layout()
-plt.savefig('diameter_comparison.png', dpi=300)
-plt.show()
-
-# R² using the estimated curves evaluated at the data points
-def r_squared(y_true, y_pred):
-    ss_res = np.sum((y_true - y_pred) ** 2)
-    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
-    return 1 - (ss_res / ss_tot)
-
-r2_2d = r_squared(diameter_2d, power_law(processors, *params_2d))
-r2_3d = r_squared(diameter_3d, power_law(processors, *params_3d))
-r2_hypercube = r_squared(diameter_hypercube, power_law(processors, *params_hypercube))
-
-print(f"\nR² values:")
-print(f"2D Mesh: {r2_2d:.4f}")
-print(f"3D Mesh: {r2_3d:.4f}")
-print(f"Hypercube: {r2_hypercube:.4f}")
+# Plot congestion
+plot_single_metric(congestion, 'Congestion', 'Congestion vs Number of Processors', 'congestion_comparison.png', color='orange', marker='x')
 

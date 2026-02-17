@@ -32,9 +32,9 @@ p_smooth = np.linspace(processors.min(), processors.max(), 200)
 # Create the plot: data points + curves estimated from those points
 # Use linear x-axis 0--45000 like the reference plot
 plt.figure(figsize=(10, 6))
-plt.plot(processors, diameter_2d, 'o', color='blue', markersize=8, label='2D Mesh (data)')
-plt.plot(processors, diameter_3d, 's', color='red', markersize=8, label='3D Mesh (data)')
-plt.plot(processors, diameter_hypercube, '^', color='green', markersize=8, label='Hypercube (data)')
+plt.plot(processors, diameter_2d, 'o', color='blue', markersize=8, alpha=0.5, label='2D Mesh (data)')
+plt.plot(processors, diameter_3d, 's', color='red', markersize=8, alpha=0.5, label='3D Mesh (data)')
+plt.plot(processors, diameter_hypercube, '^', color='green', markersize=8, alpha=0.5, label='Hypercube (data)')
 
 plt.plot(p_smooth, power_law(p_smooth, *params_2d), '--', color='blue', linewidth=2,
          label=f'2D fit: {params_2d[0]:.2f}*p^{params_2d[1]:.2f}')

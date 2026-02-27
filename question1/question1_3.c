@@ -73,7 +73,7 @@ bool is_star_bst(struct Node* root){
 
     int difference = abs(left_size - right_size);
 
-    return (3 * difference >= root_size);
+    return ( difference >= root_size / 3);
 }
 
 

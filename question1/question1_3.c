@@ -363,6 +363,19 @@ void print_inorder_with_marks(struct Node* root){
     print_inorder_with_marks(root->right);
 }
 
+
+bool look_up(struct Node*root, int val){
+    if(!root){
+        return false;
+    }
+    if (root->value == val){
+        return !root->marked;
+    } else if (root->value > val){
+        return look_up(root->left, val);
+    } else{
+        return look_up(root->right, val);
+}
+}
 int main(void){
     struct Node* root = NULL;
 
@@ -402,7 +415,14 @@ int main(void){
         print_tree_from_heap_array(b, m);
         free(b);
     }
+    int looks[] = {1, 6, 10, 5, 8, 9};
+    int look_size = (int)(sizeof(looks)/sizeof(looks[0]));
 
+    printf("\nLookup results:\n");
+    for (int i = 0; i < look_size; i++){
+        int x = looks[i];
+        printf("look_up %d: %s\n", x, look_up(root, x) ? "true" : "false");
+    }
     free_tree(root);
     return 0;
 }

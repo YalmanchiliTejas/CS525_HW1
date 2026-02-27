@@ -101,6 +101,9 @@ bool is_balanced(struct Node* root, int c){
 }
 
 struct Node* rebalance_insert(struct Node* root){
+    if(is_balanced(root, 1)){
+        return root;
+    }
 
     int nodes = root->size;
 
@@ -140,7 +143,7 @@ struct Node* lazy_insert(struct Node* root, int val){
     }
     root->size = 1 + get_size(root->left) + get_size(root->right);
 
-    if (is_star_bst(root) && !is_balanced(root, 1)){
+    if (is_star_bst(root)){
         root = rebalance_insert(root);
     }
 

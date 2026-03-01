@@ -274,6 +274,6 @@ int main(){
   pthread_mutex_lock(&act_l);
   while(thread_c>0) pthread_cond_wait(&act_cond,&act_l);
   pthread_mutex_unlock(&act_l);
-
+  free_tree(root);
   return 0;
 }

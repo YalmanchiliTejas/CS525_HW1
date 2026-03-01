@@ -267,7 +267,7 @@ int main(){
   printf("del 5 elements for 2.2\n");
   print_tree(root,0); 
 
-  int look[] ={1,6,10,6,8,0};
+  int look[] ={1,6,10,5,8,0};
   for(int i = 0; i<6;i++){
     start_t(op_t::OP_LOOKUP,look[i]);
   }

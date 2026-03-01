@@ -151,106 +151,39 @@ struct Node* lazy_insert(struct Node* root, int val){
     return root;
 }
 
+void inorder_traversal_tree_print(struct Node* root){
+    if(!root){\
+        return;
+    }
 
-static int height(struct Node* r) {
-  if (!r) return 0;
-  int hl = height(r->left);
-  int hr = height(r->right);
-  return 1 + (hl > hr ? hl : hr);
+    inorder_traversal_tree_print(root->left);
+  
+    printf("%d ", root->value);
+    
+
+    inorder_traversal_tree_print(root->right);
+}
+void print_tree(struct Node* root, int level){
+    if(root == NULL){
+        return;
+    }
+    printf("|");
+    for (int i = 0; i < level; i++){
+        printf("-");
+    }
+   
+        printf("%d\n", root->value);
+    
+    print_tree(root->left, level + 1);
+    print_tree(root->right, level + 1);
 }
 
-static int pow2_int(int e) {
-  int x = 1;
-  while (e-- > 0) x <<= 1;
-  return x;
-}
 
-static void fill_heap_array(struct Node* root, int* arr, int idx, int max_size) {
-  if (!root || idx >= max_size) return;
-
-  arr[idx] = root->value;
-  fill_heap_array(root->left,  arr, 2*idx + 1, max_size);
-  fill_heap_array(root->right, arr, 2*idx + 2, max_size);
-}
-
-// Returns heap-style array with -1 for missing nodes.
-// out_n = array length (= 2^h - 1).
-static int* tree_to_heap_array(struct Node* root, int* out_n) {
-  *out_n = 0;
-  if (!root) return NULL;
-
-  int h = height(root);
-  int n = pow2_int(h) - 1;
-
-  int* arr = (int*)malloc((size_t)n * sizeof(int));
-  if (!arr) { perror("malloc"); exit(1); }
-
-  for (int i = 0; i < n; i++) arr[i] = -1;
-
-  fill_heap_array(root, arr, 0, n);
-
-  *out_n = n;
-  return arr;
-}
 void free_tree(struct Node* root) {
   if (!root) return;
   free_tree(root->left);
   free_tree(root->right);
   free(root);
-}
-
-
-static int levels_from_size(int n) {
-  // smallest h such that (2^h - 1) >= n
-  int h = 0;
-  int total = 0;
-  while (total < n) {
-    h++;
-    total = (1 << h) - 1;
-  }
-  return h;
-}
-
-static void print_spaces(int k) {
-  for (int i = 0; i < k; i++) putchar(' ');
-}
-
-// Prints a heap-indexed array (size = 2^h - 1 recommended) as a pyramid.
-// Missing nodes should be -1.
-static void print_tree_from_heap_array(const int* arr, int size) {
-  if (!arr || size <= 0) {
-    printf("(empty)\n");
-    return;
-  }
-
-  int h = levels_from_size(size);
-  int idx = 0;
-
-  for (int level = 0; level < h; level++) {
-    int nodes_this_level = 1 << level;
-
-    // spacing (tuned for single-/double-digit values; OK for this assignment)
-    int first_pad   = (1 << (h - level - 1)) * 2 - 1;
-    int between_pad = (1 << (h - level)) * 2 - 1;
-
-    print_spaces(first_pad);
-
-    for (int j = 0; j < nodes_this_level; j++) {
-      int v = (idx < size) ? arr[idx] : -1;
-
-      if (v == -1) {
-        putchar(' ');
-      } else {
-        printf("%d", v);
-      }
-
-      idx++;
-      if (j != nodes_this_level - 1) print_spaces(between_pad);
-    }
-    putchar('\n');
-
-    if (idx >= size) break;
-  }
 }
 
 int main(void){
@@ -263,11 +196,7 @@ int main(void){
     }
 
     printf("Final LBST:\n");
-    int n;
-    int* a = tree_to_heap_array(root, &n);
-    for (int i = 0; i < n; i++) printf("%d ", a[i]);
-    printf("\n");
-    print_tree_from_heap_array(a, n);
+    print_tree(root, 0);
     free_tree(root);
 
     return 0;

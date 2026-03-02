@@ -445,40 +445,6 @@ double seconds(void){
 int main(void){
     struct Node* root = NULL;
 
-    int values[] = {8,7,9,1,5,2,6,3,4,0};
-    int val_size = (int)(sizeof(values)/sizeof(values[0]));
-
-    for(int i = 0; i < val_size; i++){
-        root = lazy_insert(root, values[i]);
-    }
-
-    // Print after all inserts
-    printf("After inserts:\n");
-    int n;
-    print_tree(root, 0);
-    
-    // Deletion order
-    int dels[] = {7, 0, 6, 2, 10};
-    int del_size = (int)(sizeof(dels)/sizeof(dels[0]));
-
-    for(int i = 0; i < del_size; i++){
-        int x = dels[i];
-        root = lazy_delete(root, x);
-
-        printf("\nAfter delete %d:\n", x);
-
-        printf("Inorder (marked with *): ");
-        print_tree(root, 0);
-   
-    }
-    int looks[] = {1, 6, 10, 5, 8, 9};
-    int look_size = (int)(sizeof(looks)/sizeof(looks[0]));
-
-    printf("\nLookup results:\n");
-    for (int i = 0; i < look_size; i++){
-        int x = looks[i];
-        printf("look_up %d: %s\n", x, look_up(root, x) ? "true" : "false");
-    }
     int m = 3000000;
     int total_ops = 0;
 

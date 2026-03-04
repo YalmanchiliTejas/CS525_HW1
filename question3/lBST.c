@@ -356,7 +356,7 @@ struct Operation* generate_D(int m, int * total_ops){
 
     int total_size = z1_size + z2_size + z3_size;
     *total_ops = total_size;
-    int * vals = (int*) malloc((size_t) total_size * sizeof(int));
+    int * vals = (int*) malloc((size_t) m* sizeof(int));
     int * Z1 = (int*) malloc((size_t) z1_size * sizeof(int));
     int * Z2 = (int*) malloc((size_t) z2_size * sizeof(int));
     int * Z3 = (int*) malloc((size_t) z3_size * sizeof(int));
@@ -365,7 +365,7 @@ struct Operation* generate_D(int m, int * total_ops){
         printf("Error in malloc for D or Z arrays");
         exit(1);
     }
-    for(int i = 0; i < m; i++){
+    for(int i = 0; i <m; i++){
         vals[i]= i;
     }
 

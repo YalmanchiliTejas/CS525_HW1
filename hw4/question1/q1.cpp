@@ -10,9 +10,9 @@ double get_time(){
 }
 
 int main(int argc, char * argv[]){
-  int num_pingpongs = 10000;
-  int num_sizes = 8;
-  int message_sizes[num_sizes] = {1024,2048,4096, 8192,16384, 32768, 65536, 102400};
+  int num_pingpongs = 1000;
+  //int num_sizes = 8;
+  //int message_sizes[num_sizes] = {1024,2048,4096, 8192,16384, 32768, 65536, 102400};
 
   int rank, processors;
   MPI_Init(&argc, &argv);
@@ -22,8 +22,8 @@ int main(int argc, char * argv[]){
     MPI_Finalize();
     return 0;
   }
-  for(int i = 0; i<num_sizes;i++){
-    int message_size = message_sizes[i];
+  for(int i = 1; i<=100;i++){
+    int message_size = 1000*i;
     char * message = (char *) malloc((size_t) message_size);
     for(int j = 0; j<message_size;j++){
       message[j]='a';
